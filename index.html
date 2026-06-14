@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeRadar — NSE Intraday Scanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2230;--border:#30363d;
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#2ea043;--gl:#3fb950;--gbg:#0d2818;
+  --red:#da3633;--rl:#f85149;--rbg:#2d1212;
+  --amber:#d29922;--al:#f0b429;--abg:#2d1f00;
+  --blue:#1f6feb;--bl:#388bfd;--bbg:#0d1f3c;
+  --purple:#8957e5;--pl:#a371f7;--pbg:#1a0f2e;
+  --accent:#238636;--font:'Inter',system-ui,sans-serif;
+}
+
+/* ── BACKGROUNDS ── */
+body{font-family:var(--font);min-height:100vh;color:var(--text);background:var(--bg);transition:background 0.5s;}
+body.bg-dark{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2230;--border:#30363d;}
+body.bg-midnight{--bg:#060914;--bg2:#0c1228;--bg3:#121a38;--border:#1e2a50;}
+body.bg-forest{--bg:#061210;--bg2:#0b1e18;--bg3:#102a22;--border:#1a3828;}
+body.bg-purple{--bg:#0c0818;--bg2:#14102c;--bg3:#1c163e;--border:#2e2460;}
+body.bg-carbon{--bg:#101010;--bg2:#181818;--bg3:#202020;--border:#2e2e2e;}
+body.bg-navy{--bg:#050d1a;--bg2:#091628;--bg3:#0f1f38;--border:#1a3060;}
+
+/* ── NAVBAR ── */
+#navbar{
+  background:rgba(13,17,23,0.85);
+  border-bottom:1px solid var(--border);
+  padding:0 1.5rem;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.brand-logo{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,#238636,#3fb950);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;box-shadow:0 0 16px rgba(63,185,80,0.3);
+}
+.brand-name{font-size:17px;font-weight:800;letter-spacing:-0.5px;color:var(--text);}
+.brand-name span{color:var(--gl);}
+.brand-tag{font-size:10px;background:var(--gbg);color:var(--gl);border:1px solid var(--green);border-radius:4px;padding:1px 6px;font-weight:600;margin-left:4px;}
+
+.nav-tabs{display:flex;gap:2px;background:var(--bg3);border-radius:12px;padding:4px;}
+.ntab{
+  background:transparent;border:none;color:var(--muted);
+  padding:7px 18px;border-radius:9px;font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:7px;
+  font-family:var(--font);
+}
+.ntab:hover{color:var(--text);background:rgba(255,255,255,0.05);}
+.ntab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.5);}
+
+.nav-right{display:flex;align-items:center;gap:10px;}
+.lang-pill{display:flex;background:var(--bg3);border-radius:8px;padding:3px;border:1px solid var(--border);}
+.lbtn{background:transparent;border:none;color:var(--muted);padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--font);}
+.lbtn.active{background:var(--blue);color:#fff;}
+.mkt-chip{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:500;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-open{background:var(--gl);animation:blink 1.5s infinite;}
+.dot-closed{background:var(--muted);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── INDEX BAR ── */
+#idx-bar{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:8px 1.5rem;display:flex;align-items:center;gap:0;flex-wrap:wrap;
+}
+.idx-item{display:flex;align-items:center;gap:10px;padding:0 1.5rem 0 0;}
+.idx-item+.idx-item{border-left:1px solid var(--border);padding-left:1.5rem;}
+.idx-badge{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;}
+.idx-val{font-size:15px;font-weight:700;}
+.idx-chg{font-size:12px;font-weight:500;}
+.up{color:var(--gl);}
+.dn{color:var(--rl);}
+.idx-time{font-size:11px;color:var(--muted);margin-left:auto;display:flex;align-items:center;gap:5px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--gl);animation:blink 1.5s infinite;}
+
+/* ── PAGES ── */
+.page{display:none;padding:1.5rem;max-width:1000px;margin:0 auto;}
+.page.active{display:block;}
+
+/* ── HERO SECTION ── */
+.hero{
+  background:linear-gradient(135deg,rgba(35,134,54,.15) 0%,rgba(31,111,235,.1) 50%,rgba(137,87,229,.08) 100%);
+  border:1px solid rgba(63,185,80,.2);border-radius:20px;
+  padding:2rem;margin-bottom:1.5rem;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;
+  position:relative;overflow:hidden;
+}
+.hero-left h1{font-size:24px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;}
+.hero-left h1 span{color:var(--gl);}
+.hero-left p{font-size:13px;color:var(--muted);line-height:1.6;}
+.hero-stats{display:flex;gap:1rem;flex-wrap:wrap;}
+.hstat{
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:12px;padding:12px 18px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  min-width:105px;
+}
+.hstat-val{font-size:16px;font-weight:700;}
+.hstat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.risk-pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.rp-low{background:var(--gbg);color:var(--gl);border:1px solid var(--green);}
+.rp-medium{background:var(--abg);color:var(--al);border:1px solid var(--amber);}
+.rp-high{background:var(--rbg);color:var(--rl);border:1px solid var(--red);}
+
+/* ── SCAN ROW ── */
+.scan-row{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.scan-btn{
+  background:linear-gradient(135deg,#238636,#2ea043);
+  color:#fff;border:none;padding:11px 28px;border-radius:12px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 0 20px rgba(46,160,67,.3);
+  transition:all 0.2s;font-family:var(--font);
+}
+.scan-btn:hover{transform:translateY(-1px);box-shadow:0 4px 24px rgba(46,160,67,.4);}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.fchip{
+  background:var(--bg3);border:1px solid var(--border);
+  color:var(--muted);padding:7px 14px;border-radius:20px;
+  font-size:12px;font-weight:500;cursor:pointer;transition:all 0.
